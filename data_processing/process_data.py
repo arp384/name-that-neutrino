@@ -52,10 +52,10 @@ def process_data(ntn_exports, event_csvs):
             df2 = pd.DataFrame(columns = df.columns)
 
         size = len(df.index)                                                                                            #get the size of the current csv
-        ssid_array = np.ones((size, 1), dtype=np.int8)*int(subject_set_ids[idx])                                        #create a column containing the subject set id
+        ssid_array = np.ones((size, 1), dtype=np.int8)*int(SUBJ_SET_IDS[idx])                                        #create a column containing the subject set id
         df['Subject Set ID'] = ssid_array                                                                               #set new column equal to subject set ids
         eventIds = np.array(df['event'])                                                                                #get event ids
-        fname = './subjects_filtered/ntn_subjects_{}.csv'.format(subject_set_ids[idx])                                  #construct file name with subjects in curretn subject set
+        fname = './subjects_filtered/ntn_subjects_{}.csv'.format(SUBJ_SET_IDS[idx])                                  #construct file name with subjects in curretn subject set
         subjects = pd.read_csv(fname)                                                                                   #read that csv
         subjects = subjects.sort_values(by=['event_id'], axis=0)                                                        #make sure it's sorted
         eventIds2 = np.array(subjects['event_id'])                                                                      #create second array with event ids from subject set file
