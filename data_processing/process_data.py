@@ -5,24 +5,11 @@ import os, os.path
 import json
 import argparse
 
-if __name__ == '__main__':
-
-    ''' Parsing command line args '''
-    parser = argparse.ArgumentParser(
-                    prog='get_retired',
-                    description='Extracts classification data for a particular retirement limit for NtN dataset')
-    parser.add_argument('events_dir', metavar='evt_dir', type=str, nargs=1, 
-                    help='location of events csv from cobalt')
-    parser.add_argument('ntn_dir', metavar='ntn_dir', type=str, nargs=1, 
-                    help = 'location of ntn exports')
-
-    args = parser.parse_args()
-    event_csvs = args.events_dir[0]                                                                                     #extract input directory (where to get csvs with subject set data)
-    ntn_exports = args.ntn_dir[0]                                                                                       #where to put stuff later
-
-    subject_set_ids = [112109, 112391, 112425, 112433, 112464, 112392, 112414, 112418, 112498, 
+SUBJ_SET_IDS = [112109, 112391, 112425, 112433, 112464, 112392, 112414, 112418, 112498, 
                        112473, 112487, 112492, 112467, 112116, 112481, 112501, 112118, 112119, 112120]                  #subject set ids we want
-    
+
+
+def process_data(ntn_exports, event_csvs):
 
     '''Slice up subject data into subject sets'''
     ntn_subjects_all = pd.read_csv(os.path.join(ntn_exports, 'name-that-neutrino-subjects.csv'))                        #csv containing all subjects from zooniverse
@@ -48,7 +35,7 @@ if __name__ == '__main__':
     ntn_subjects['energy'] = energy
 
 
-    for id in subject_set_ids:                                                                                          #loop over subject ids
+    for id in SUBJ_SET_IDS:                                                                                          #loop over subject ids
         fname = os.path.join(os.getcwd(), 'subjects_filtered', 'ntn_subjects_{}.csv'.format(id))                        #construct filename
         df = ntn_subjects[ntn_subjects['subject_set_id']==id]                                                           #create new data frame
         df = df.drop_duplicates(subset=['event_id'])                                                                    #for some reason some of the csvs have duplicate rows so those must be dropped!
@@ -101,8 +88,28 @@ if __name__ == '__main__':
     df2 = df2[['Subject ID', 'run', 'Subject Set ID', 'event', 'Energy', 'edep', 'bg_charge', 
                'coinc_muons', 'qtot', 'radialcog', 'verticalcog', 'peRatio', 'truth_classification', 
                'corsika_label', 'DNN Classification', 'User Consensus Classification']]                                 #reorder columns
+    csv_name = os.path.join(os.getcwd(), 'ntn_data_processed.csv')
+    df2.to_csv(csv_name)                                                     #save 
+    return csv_name         
+
+if __name__ == '__main__':
+
+    ''' Parsing command line args '''
+    parser = argparse.ArgumentParser(
+                    prog='get_retired',
+                    description='Extracts classification data for a particular retirement limit for NtN dataset')
+    parser.add_argument('events_dir', metavar='evt_dir', type=str, nargs=1, 
+                    help='location of events csv from cobalt')
+    parser.add_argument('ntn_dir', metavar='ntn_dir', type=str, nargs=1, 
+                    help = 'location of ntn exports')
+
+    args = parser.parse_args()
+    event_csvs = args.events_dir[0]                                                                                     #extract input directory (where to get csvs with subject set data)
+    ntn_exports = args.ntn_dir[0]                                                                                       #where to put stuff later
+
     
-    df2.to_csv(os.path.join(os.getcwd(), 'ntn_data_processed.csv'))                                                     #save                                 
+    process_data(ntn_exports, event_csvs)           #run master function
+                           
 
                                                              
  
