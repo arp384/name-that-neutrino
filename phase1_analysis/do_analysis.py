@@ -36,7 +36,7 @@ if __name__ == '__main__':
     for lim in retirement_lims:
 
         print(f'Performing phase 1 analysis for retirement limit of {lim}\n')
-        outdir = f'data_{lim}lim'
+        outdir = f'../../data/output_retirement_lim{lim}'
         if (os.path.isdir(os.path.join(os.getcwd(), outdir)) == False):                                 #create directory for plots, if not existent
             os.mkdir(os.path.join(os.getcwd(), outdir))
             print(f'    Directory {os.path.join(os.getcwd(), outdir)} created.\n')
