@@ -59,6 +59,7 @@ def consolidateData(data_consensus, ntn_subjects, retirement_lim, outdir):
     truth_classifications = []
     subj_ids = []
     total_class_counts = []
+    subj_set_id = []
 
 
     #go through the classifications csv
@@ -140,8 +141,8 @@ def makePlots(result_consensus, retirement_lim, outdir):
     })
     plt.figure()
     result_retired['data.agreement'].plot(kind='hist',bins=bin_edges,logy=False,edgecolor='black',figsize=(12,7))
-    plt.xlabel(r'Consensus User Vote Fraction',fontsize=25,labelpad=15)
-    plt.ylabel(r'Number of Events',fontsize=25,labelpad=15)
+    plt.xlabel(f'Consensus User Vote Fraction (Retirement Limit = {retirement_lim})',fontsize=25,labelpad=15)
+    plt.ylabel('Number of Events',fontsize=25,labelpad=15)
     plt.xticks(new_bin_labels,labels=new_bin_labels,rotation=45,fontsize=15)
     plt.xlim(0.15,1.05)
     plt.ylim(0,1000)
@@ -160,7 +161,7 @@ def makePlots(result_consensus, retirement_lim, outdir):
     plt.figure(figsize=(12,7))
     counts, bins = np.histogram(result_retired['data.agreement'], bins=bin_edges)
     plt.stairs(counts/sum(counts), bins, fill=True, edgecolor='black', linewidth=1.2)
-    plt.xlabel(r'Consensus User Vote Fraction',fontsize=25,labelpad=15)
+    plt.xlabel(f'Consensus User Vote Fraction (Retirement Limit = {retirement_lim})',fontsize=25,labelpad=15)
     plt.ylabel(r'Frequency',fontsize=25,labelpad=15)
     plt.xticks(new_bin_labels,labels=new_bin_labels,rotation=45,fontsize=15)
     plt.xlim(0.15,1.05)
