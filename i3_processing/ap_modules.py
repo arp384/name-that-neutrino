@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 sys.path.append('/home/aphillips/name-that-neutrino/ntn')
-from uniformenergydist_filter import *
+#from uniformenergydist_filter import *
 import os
 import subprocess
 import argparse

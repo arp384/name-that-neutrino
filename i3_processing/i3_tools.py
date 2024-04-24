@@ -72,7 +72,7 @@ def apply_modules(input_file, output_dir):
     return (outfile, hdf_name)
 
 '''Extract events and put info into csvs'''
-def process_data(hdf, out_dir, subject_set_id):
+def process_data(hdf): #, out_dir, subject_set_id):
     #open hdf of desired i3 file
     hdf = f'{hdf}'
     hdf_file = h5py.File(hdf, "r+")
@@ -89,7 +89,7 @@ def process_data(hdf, out_dir, subject_set_id):
     corsika_label = cr_label, bg_charge = bg_charge, qtot = Qtot, \
      coinc_muons = coincident_muons))
     hdf_file.close() #close hdf file now that dataframe is made. 
-    csv_name = f'{out_dir}/all_evt_features_{run_id[0]}_{subject_set_id}.csv'
-    df.to_csv(csv_name)
-    return csv_name
+    #csv_name = f'{out_dir}/all_evt_features_{run_id[0]}_{subject_set_id}.csv'
+    #df.to_csv(csv_name)
+    return df #csv_name
     
