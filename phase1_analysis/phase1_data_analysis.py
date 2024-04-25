@@ -59,8 +59,6 @@ def consolidateData(data_consensus, ntn_subjects, retirement_lim, outdir):
     truth_classifications = []
     subj_ids = []
     total_class_counts = []
-    subj_set_id = []
-
 
     #go through the classifications csv
     for i in range(len(ntn_subjects)):
