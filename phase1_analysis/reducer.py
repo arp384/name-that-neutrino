@@ -35,6 +35,7 @@ class Reducer:
         ''' Set up hash map '''
         #create hash map for subject ids, where each entry is a dict with the 5 categories.
         subj_ids = np.array(subj['subject_id'])
+        subj_set_ids = np.array(subj['subject_set_id'])
         subj_dict = {}                                                                           #create empty dict
         for id in subj_ids:
             subj_dict[id] = {'Through-Going Track': 0, 'Stopping Track': 0, 'Starting Track': 0, 'Cascade': 0, 'Skimming Track': 0} #initialize dict key to subj id, value to 0
@@ -69,7 +70,7 @@ class Reducer:
             MAX_VOTES.append(max_votes)
             MOST_LIKELY.append(most_likely)
             AGREEMENT.append(max_votes/lim)
-        data = {'subject_id': subj_ids, 'data.num_votes': MAX_VOTES, 'data.most_likely':MOST_LIKELY, 'data.agreement':AGREEMENT}
+        data = {'subject_id': subj_ids, 'subject_set_id':subj_set_ids, 'data.num_votes': MAX_VOTES, 'data.most_likely':MOST_LIKELY, 'data.agreement':AGREEMENT}
             
         df = pd.DataFrame(data)
         csv_name = os.path.join(output_dir, 'consensus_reduced.csv')
@@ -96,4 +97,4 @@ if __name__ == '__main__':
     output_dir = os.path.join(os.getcwd(), args.out_dir[0])                                  #extract output directory (where to put modified ntn datasets)
 
     reducer = Reducer(input_dir, output_dir, lim)
-    reducer.reduce(input_dir, output_dir, lim)                                               #run reducer func
+    reducer.reduce()                                               #run reducer func
