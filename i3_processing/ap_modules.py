@@ -256,14 +256,9 @@ class QTot(icetray.I3Module):
         pulse_map = frame['I3MCPulseSeriesMap']#dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'InIceDSTPulses') #Get pulse map
         keys = pulse_map.keys()
         
-        Qtot = 0
-        for i,j in pulse_map: #sum over all doms, pulses
-            
-            for p in j: #for each dom, loop over the pulses it sees
-                
-                Qtot += p.charge
-          
-        
+        all_pulses = [p for i,j in pulse_map for p in j]
+        Qtot = sum([p.charge for p in all_pulses])
+
         frame[self.where] = dataclasses.I3Double(Qtot) #putting it in the frame
         self.PushFrame(frame)
         
@@ -754,28 +749,29 @@ class CorsikaLabeler(icetray.I3Module):
         mcbg_q_from_muons = 0
 
         # Sadly some simulations break the MCPEID map, so give useres the chance to skip
-        if self._mc_pulse_pid_map_name is not None and self._mc_pulse_pid_map_name in frame:
-            # Also collect MCPE from CR muons
-            
-            poly_muon_ids = [p.id for p in poly_muons]
+        
+        poly_muon_ids = [p.id for p in poly_muons]
             # Most MCPE will be caused by daughter particles of the muon
-            poly_muon_ids += [ch.id for p in poly_muons for ch in bg_tree.children(p)] 
-            mc_pulse_series_map = frame[self._mc_pulse_map_name]
-            if self._mc_pulse_map_name in frame:
-                # Collect the total mcpe charge from CR muons
-                for omkey, idmap in frame[self._mc_pulse_pid_map_name]:
-
-                    if omkey not in mc_pulse_series_map:
-                        warnings.warn("Couldn't find OMKey in MCPulseSeriesMap")
-                    else:
-                        mc_pulse_series = mc_pulse_series_map[omkey]
-                        for pmid in poly_muon_ids:
-                            if pmid in idmap.keys():
-                                mc_pulse_indices = idmap[pmid]
-                                mcbg_q_from_muons += sum(
-                                    [mc_pulse_series[i].charge for i in mc_pulse_indices] #this line doesn't work? I3MCPulse has no attribute, npe
-                                )
-                                
+        poly_muon_ids += [ch.id for p in poly_muons for ch in bg_tree.children(p)] 
+        mc_pulse_series_map = frame[self._mc_pulse_map_name]
+        
+        #why am i computing some background q greater than qtot? 
+       
+        all_pulses = [p for i,j in mc_pulse_series_map for p in j]
+        pulses_from_mu = []
+        pulses_from_sig = []
+        for omkey, idmap in frame[self._mc_pulse_pid_map_name]:
+            
+            mc_pulse_series = mc_pulse_series_map[omkey]
+            pulse_ind = []
+            for pid in idmap.keys():
+                for ind in idmap[pid]:
+                    if ind not in pulse_ind:
+                        if pid in poly_muon_ids:
+                            pulses_from_mu.append(mc_pulse_series[ind])
+                            pulse_ind += [ind]
+                          
+        mcbg_q_from_muons = sum([p.charge for p in pulses_from_mu])
 
         return (
             cr_class,
