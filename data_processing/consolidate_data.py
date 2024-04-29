@@ -25,6 +25,7 @@ def consolidate(path_to_ntn, path_to_mc, outfile_name):
 
     corsika_labels = list(mc_data['corsika_label']) #corsika labels from corsika labeler
     bg_charge = list(mc_data['bg_charge'])          #background charge contribution
+    signal_charge = list(mc_data['signal_charge']) 
     qtot = list(mc_data['qtot'])                    #total charge in event
     qratio = np.divide(bg_charge, qtot)             #charge ratio
 
@@ -34,9 +35,10 @@ def consolidate(path_to_ntn, path_to_mc, outfile_name):
     ntn_data.insert(0, 'bg_charge', bg_charge)
     ntn_data.insert(0, 'qtot', qtot)
     ntn_data.insert(0, 'qratio', qratio)
+    ntn_data.insert(0, 'signal_charge', signal_charge)
 
     #creating a new dataframe with only the relevant columns, save as csv
-    ntn_consolidated = ntn_data[['subject_set_id', 'subject_id', 'event_id','qtot', 'bg_charge', 'qratio', 'corsika_label' , 'data.most_likely', 'idx_max_score', 'truth_classification']]
+    ntn_consolidated = ntn_data[['subject_set_id', 'subject_id', 'event_id','qtot', 'bg_charge', 'signal_charge', 'qratio', 'corsika_label' , 'data.most_likely', 'idx_max_score', 'truth_classification']]
     ntn_consolidated = ntn_consolidated.rename(columns={'data.most_likely':'user_classification', 'idx_max_score':'dnn_classification'})
     ntn_consolidated.to_csv(outfile_name, index=False)
 
