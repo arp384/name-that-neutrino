@@ -38,8 +38,8 @@ def consolidate(path_to_ntn, path_to_mc, outfile_name):
     ntn_data.insert(0, 'signal_charge', signal_charge)
 
     #creating a new dataframe with only the relevant columns, save as csv
-    ntn_consolidated = ntn_data[['subject_set_id', 'subject_id', 'event_id','qtot', 'bg_charge', 'signal_charge', 'qratio', 'corsika_label' , 'data.most_likely', 'idx_max_score', 'truth_classification']]
-    ntn_consolidated = ntn_consolidated.rename(columns={'data.most_likely':'user_classification', 'idx_max_score':'dnn_classification'})
+    ntn_consolidated = ntn_data[['subject_set_id', 'subject_id', 'event_id','qtot', 'bg_charge', 'signal_charge', 'qratio', 'corsika_label' , 'data.most_likely', 'data.agreement', 'idx_max_score', 'truth_classification']]
+    ntn_consolidated = ntn_consolidated.rename(columns={'data.most_likely':'user_classification', 'data.agreement':'user agreement', 'idx_max_score':'dnn_classification'})
     ntn_consolidated.to_csv(outfile_name, index=False)
 
 if __name__ == '__main__':
