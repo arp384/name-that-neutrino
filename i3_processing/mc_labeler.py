@@ -407,7 +407,7 @@ class MCLabeler(icetray.I3Module):
                 pulse_ind = []                                      #save indices of pulses we've already seen
                 for pid in idmap.keys():                            #loop over all the pids in the pid map
                     for ind in idmap[pid]:                          #loop over all the indices in the idmap
-                        if ind not in pulse_ind:                    #check that index is not already seen
+                        if ind not in pulse_ind:                    #check that index is not already seen (some sims can have multiple pids attributable to one pulse - resulted in double counting)
                             if pid in pids:                         #check if the pid is in our list of child pids
                                 pulses_from_sig.append(mc_pulse_series[ind])    #if it is, add the pulse to our list
                                 pulse_ind += [ind]                              #add the index to list of seen indices
