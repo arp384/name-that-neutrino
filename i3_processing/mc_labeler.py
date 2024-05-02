@@ -383,36 +383,36 @@ class MCLabeler(icetray.I3Module):
             
 
             ###################################################  AP ADDITION ######################################################################
-            #get ALL the children of the in ice neutrino using a loop (as oppposed to only first generation of children, as in bg charge func)
+            #get the entire subtree of children of the neutrino (as opposed to only first generation); this ensures we don't miss any charge
             while True:
-                #children = [ch in tree.children(p) for p in children]
                 tmp = []
+
+                #loop over all the particles in the children array
                 for p in children:
-                    for ch in tree.children(p):
+                    for ch in tree.children(p): #add every child of THAT particle to a new array
                         tmp.append(ch)
-                if tmp == []:
+                if tmp == []:                   #if the array is empty, we know to stop
                     break
-                pids += [p.id for p in tmp]
-                children = tmp
+                pids += [p.id for p in tmp]     #add the pids of the children to our list
+                children = tmp                  #recurse
                 
-            children = tree.children(in_ice_neutrino)
-            mc_pulse_series_map = frame[self._mc_pulse_map_name]
+            children = tree.children(in_ice_neutrino)               #reset the children array, because it's used later
+            mc_pulse_series_map = frame[self._mc_pulse_map_name]    #get pulse series
 
-            #why am i computing some background q greater than qtot? 
 
-            pulses_from_sig = []
-            for omkey, idmap in frame[self._mc_pulse_pid_map_name]:
+            pulses_from_sig = []                                    #initialize list of pulses
+            for omkey, idmap in frame[self._mc_pulse_pid_map_name]: #loop over all the omkeys in pid map
 
-                mc_pulse_series = mc_pulse_series_map[omkey]
-                pulse_ind = []
-                for pid in idmap.keys():
-                    for ind in idmap[pid]:
-                        if ind not in pulse_ind:
-                            if pid in pids:
-                                pulses_from_sig.append(mc_pulse_series[ind])
-                                pulse_ind += [ind]
+                mc_pulse_series = mc_pulse_series_map[omkey]        #get the pulse series on that DOM
+                pulse_ind = []                                      #save indices of pulses we've already seen
+                for pid in idmap.keys():                            #loop over all the pids in the pid map
+                    for ind in idmap[pid]:                          #loop over all the indices in the idmap
+                        if ind not in pulse_ind:                    #check that index is not already seen
+                            if pid in pids:                         #check if the pid is in our list of child pids
+                                pulses_from_sig.append(mc_pulse_series[ind])    #if it is, add the pulse to our list
+                                pulse_ind += [ind]                              #add the index to list of seen indices
 
-            qsig = sum([p.charge for p in pulses_from_sig]) 
+            qsig = sum([p.charge for p in pulses_from_sig])     #sum up all the pulses to get the signal charge
             ##################################################################################################################################
 
 
