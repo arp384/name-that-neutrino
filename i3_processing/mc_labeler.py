@@ -96,6 +96,20 @@ class MCLabeler(icetray.I3Module):
             "Name of the I3MCPESeriesMap",
             "I3MCPulseSeriesMap",
         )
+        
+        self.AddParameter(
+            "mc_pulse_pid_map_name",
+            "Name of the I3MCPESeriesMapParticleIDMap. Set to `None` to disable background MCPE counting."
+            "Note: Naive MCPE downsampling will render I3MCPESeriesMapParticleIDMap useles",
+            "I3MCPulseSeriesMapParticleIDMap", #(AP edit 2-21-24)
+        )
+        self.AddParameter(
+            "mc_pulse_map_name",
+            "Name of the I3MCPulseSeriesMap",
+            "I3MCPulseSeriesMap",
+        )
+        
+        
         self.AddParameter("mctree_name", "Name of the I3MCTree", "SignalI3MCTree")
         self.AddParameter(
             "bg_mctree_name",
@@ -121,6 +135,8 @@ class MCLabeler(icetray.I3Module):
         self._det_hull_padding = self.GetParameter("det_hull_padding")
         self._mcpe_pid_map_name = self.GetParameter("mcpe_pid_map_name")
         self._mcpe_map_name = self.GetParameter("mcpe_map_name")
+        self._mc_pulse_pid_map_name = self.GetParameter("mc_pulse_pid_map_name")
+        self._mc_pulse_map_name = self.GetParameter("mc_pulse_map_name")
         self._mctree_name = self.GetParameter("mctree_name")
         self._bg_mctree_name = self.GetParameter("bg_mctree_name")
         self._event_properties_name = self.GetParameter("event_properties_name")
@@ -361,6 +377,43 @@ class MCLabeler(icetray.I3Module):
         if in_ice_neutrino is not None:
 
             children = tree.children(in_ice_neutrino)
+            pids = []
+            #children = tree.children(in_ice_neutrino)
+            pids += [p.id for p in children]
+            
+            #get ALL the children of the in ice neutrino using a loop (as oppposed to only first generation of children, as in bg charge func)
+            while True:
+                #children = [ch in tree.children(p) for p in children]
+                tmp = []
+                for p in children:
+                    for ch in tree.children(p):
+                        tmp.append(ch)
+                if tmp == []:
+                    break
+                pids += [p.id for p in tmp]
+                children = tmp
+                
+            children = tree.children(in_ice_neutrino)
+            mc_pulse_series_map = frame[self._mc_pulse_map_name]
+
+            #why am i computing some background q greater than qtot? 
+
+            pulses_from_sig = []
+            for omkey, idmap in frame[self._mc_pulse_pid_map_name]:
+
+                mc_pulse_series = mc_pulse_series_map[omkey]
+                pulse_ind = []
+                for pid in idmap.keys():
+                    for ind in idmap[pid]:
+                        if ind not in pulse_ind:
+                            if pid in pids:
+                                pulses_from_sig.append(mc_pulse_series[ind])
+                                pulse_ind += [ind]
+
+            qsig = sum([p.charge for p in pulses_from_sig])
+
+
+
             # Classify everything related to muons
             if int_t in track_interactions:
                 # figure out if vertex is contained
@@ -424,7 +477,7 @@ class MCLabeler(icetray.I3Module):
         else:
             int_t = None
             containment = None
-        return int_t, containment
+        return int_t, containment, qsig
 
     def _classify_corsika(self, frame):
         """
@@ -485,7 +538,7 @@ class MCLabeler(icetray.I3Module):
         if self._is_corsika:
             int_t, containment = self._classify_corsika(frame)
         else:
-            int_t, containment = self._classify_neutrinos(frame)
+            int_t, containment,qsig = self._classify_neutrinos(frame)
 
         # Polyplopia
         tree = frame[self._mctree_name]
@@ -538,18 +591,19 @@ class MCLabeler(icetray.I3Module):
 
         #print(mcpe_from_muons)
         #print(mcpe_from_muons_charge)
-        return class_mapping.get((int_t, containment), classification.unclassified)
+        return class_mapping.get((int_t, containment), classification.unclassified), qsig
         
 
     def DAQ(self, frame):
         if self._geo is None:
             raise RuntimeError("No geometry information found")
-        classif = self.classify(frame)
+        classif,qsig = self.classify(frame)
         #print(classif)
         #print(frame['I3EventHeader']['EventID'])
         frame["classification" + self._key_postfix] = icetray.I3Int(int(classif))
         frame["classification_label" + self._key_postfix] = dataclasses.I3String(
             classif.name
         )
+        frame["signal_charge" + self._key_postfix] = dataclasses.I3Double(qsig)
         
         self.PushFrame(frame)

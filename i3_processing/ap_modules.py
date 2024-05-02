@@ -751,7 +751,7 @@ class CorsikaLabeler(icetray.I3Module):
         # Sadly some simulations break the MCPEID map, so give useres the chance to skip
         
         poly_muon_ids = [p.id for p in poly_muons]
-            # Most MCPE will be caused by daughter particles of the muon
+        # Most MCPE will be caused by daughter particles of the muon
         poly_muon_ids += [ch.id for p in poly_muons for ch in bg_tree.children(p)] 
         mc_pulse_series_map = frame[self._mc_pulse_map_name]
         

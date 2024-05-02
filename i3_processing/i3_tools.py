@@ -64,7 +64,7 @@ def apply_modules(input_file, output_dir):
         #DropOrphanStreams=[icetray.I3Frame.DAQ])
     tray.AddSegment(I3HDFWriter, Output = hdf_name, Keys = ['I3EventHeader',\
     'classification', 'corsika_label', 'Qtot',  \
-    'coincident_muons', 'bg_charge', 'subject_id'], SubEventStreams=['fullevent'])
+    'coincident_muons', 'bg_charge', 'signal_charge', 'subject_id'], SubEventStreams=['fullevent'])
     tray.AddModule('TrashCan','can')
 
     tray.Execute()
@@ -82,11 +82,12 @@ def process_data(hdf): #, out_dir, subject_set_id):
     cr_label = hdf_file['corsika_label']['value'][:] #mc_labeler value
     subj_id = hdf_file['subject_id']['value'][:]
     bg_charge = hdf_file['bg_charge']['value'][:]
+    signal_charge = hdf_file['signal_charge']['value'][:]
     Qtot = hdf_file['Qtot']['value'][:]
     coincident_muons = hdf_file['coincident_muons']['value'][:]
     #Dataframe time
     df = pd.DataFrame(dict(run = run_id, event = event_id, subject_id = subj_id, truth_classification = truth_label, \
-    corsika_label = cr_label, bg_charge = bg_charge, qtot = Qtot, \
+    corsika_label = cr_label, bg_charge = bg_charge, signal_charge = signal_charge, qtot = Qtot, \
      coinc_muons = coincident_muons))
     hdf_file.close() #close hdf file now that dataframe is made. 
     #csv_name = f'{out_dir}/all_evt_features_{run_id[0]}_{subject_set_id}.csv'
