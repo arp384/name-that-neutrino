@@ -381,6 +381,8 @@ class MCLabeler(icetray.I3Module):
             #children = tree.children(in_ice_neutrino)
             pids += [p.id for p in children]
             
+
+            ###################################################  AP ADDITION ######################################################################
             #get ALL the children of the in ice neutrino using a loop (as oppposed to only first generation of children, as in bg charge func)
             while True:
                 #children = [ch in tree.children(p) for p in children]
@@ -410,8 +412,8 @@ class MCLabeler(icetray.I3Module):
                                 pulses_from_sig.append(mc_pulse_series[ind])
                                 pulse_ind += [ind]
 
-            qsig = sum([p.charge for p in pulses_from_sig])
-
+            qsig = sum([p.charge for p in pulses_from_sig]) 
+            ##################################################################################################################################
 
 
             # Classify everything related to muons
