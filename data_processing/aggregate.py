@@ -3,12 +3,12 @@ import numpy as np # type: ignore
 import argparse
 
 '''
-filename: consolidate_data.py
+filename: aggregate_data.py
 author: andrew phillips
 purpose: combines user,dnn, and mc datasets into single dataframe
 '''
 
-def consolidate(path_to_ntn, path_to_mc, outfile_name):
+def aggregate(path_to_ntn, path_to_mc, outfile_name):
 
     mc_data = pd.read_csv(path_to_mc)                          #Monte-carlo truth labels, plus custom data properties, e.g., corsika labels, qtot, etc.
     ntn_data = pd.read_csv(path_to_ntn)                          #Processed name that neutrino data
@@ -38,15 +38,15 @@ def consolidate(path_to_ntn, path_to_mc, outfile_name):
     ntn_data.insert(0, 'signal_charge', signal_charge)
 
     #creating a new dataframe with only the relevant columns, save as csv
-    ntn_consolidated = ntn_data[['subject_set_id', 'subject_id', 'event_id','energy','qtot', 'bg_charge', 'signal_charge', 'qratio', 'corsika_label' , 'data.most_likely', 'data.agreement', 'idx_max_score', 'truth_classification']]
-    ntn_consolidated = ntn_consolidated.rename(columns={'data.most_likely':'user_classification', 'data.agreement':'user agreement', 'idx_max_score':'dnn_classification'})
-    ntn_consolidated.to_csv(outfile_name, index=False)
+    ntn_aggregated = ntn_data[['subject_set_id', 'subject_id', 'event_id','energy','qtot', 'bg_charge', 'signal_charge', 'qratio', 'corsika_label' , 'data.most_likely', 'data.agreement', 'idx_max_score', 'truth_classification']]
+    ntn_aggregated = ntn_aggregated.rename(columns={'data.most_likely':'user_classification', 'data.agreement':'user agreement', 'idx_max_score':'dnn_classification'})
+    ntn_aggregated.to_csv(outfile_name, index=False)
 
 if __name__ == '__main__':
 
     ''' Parsing command line args '''
     parser = argparse.ArgumentParser(
-                    prog='consolidate_data.py',
+                    prog='aggregate_data.py',
                     description='Combines user, dnn, and mc into a single dataframe')
     parser.add_argument('path_to_ntn', metavar='path_to_ntn', type=str, nargs=1, 
                     help='location of user/dnn dataframe')
@@ -60,4 +60,4 @@ if __name__ == '__main__':
     
     path_to_mc = args.path_to_mc[0]                                                                        #where to put stuff later
     outfile_name = args.outfile_name[0]                                                                    #where to put stuff later
-    consolidate(path_to_ntn, path_to_mc, outfile_name)
+    aggregate(path_to_ntn, path_to_mc, outfile_name)
