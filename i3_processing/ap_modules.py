@@ -910,7 +910,7 @@ class APMCLabeler(icetray.I3Module):
             for ch in children:
                 queue.append(ch)
         
-        mc_pulse_series_map = frame[self._mc_pulse_series_map]
+        mc_pulse_series_map = frame[self._mc_pulse_map_name]
 
         #issue: sometimes double counting pulses. Need a way to make sure we get set of unique pulses.
         all_pulses = []
@@ -919,16 +919,16 @@ class APMCLabeler(icetray.I3Module):
             mc_pulse_series = mc_pulse_series_map[omkey]        #get the pulse series on that DOM
 
             #id map maps pids to what pulses it's responsible for on that DOM
-            indices = range(0, len(mc_pulse_series)) #list of indices
+            indices = list(range(0, len(mc_pulse_series))) #list of indices
             for pid in idmap.keys():                            #loop over all the pids in the pid map
                 
                 if pid in pids: #check if the pid is in our list of children
 
                     #every time we see a new index pop it from the list of indices
-                    for idx, i in enumerate(idmap[pid]):
+                    for i in idmap[pid]:
                         if i in indices:
                             all_pulses.append(mc_pulse_series[i])
-                            indices.pop(idx)
+                            indices.remove(i)
 
         #now we have a list of unique pulses attributable to subtree of root particle
         charge = sum([p.charge for p in all_pulses])
@@ -1115,7 +1115,7 @@ class APMCLabeler(icetray.I3Module):
     def get_neutrino_interaction_type_nugen(wdict, tree):
         int_t = wdict["InteractionType"]
         nutype = wdict["InIceNeutrinoType"]
-        neutrino = MCLabeler.get_inice_neutrino(tree, is_li=False)
+        neutrino = APMCLabeler.get_inice_neutrino(tree, is_li=False)
 
         if neutrino is None:
             return None
@@ -1155,7 +1155,9 @@ class APMCLabeler(icetray.I3Module):
         tree = frame[self._mctree_name]
         
         in_ice_neutrino = self.get_inice_neutrino(tree, self._is_li)
-
+        
+        wdict = frame[self._weight_dict_name]
+        int_t = self.get_neutrino_interaction_type_nugen(wdict, tree)
         if in_ice_neutrino is not None:
 
             qSignal = self.getSubtreeCharge(frame, tree, in_ice_neutrino)
@@ -1258,15 +1260,15 @@ class APMCLabeler(icetray.I3Module):
             not_decayed = [
                 cont for cont in containments if cont != containments_types.decayed
             ][0]
-            return int_t, not_decayed
+            return int_t, not_decayed, bgCharge
 
         # at least one muon is uncontained
         if any([cont == containments_types.no_intersect for cont in containments]):
-            return int_t, containments_types.no_intersect
+            return int_t, containments_types.no_intersect,bgCharge
 
         # All muons are stopping
         if all([cont == containments_types.stopping for cont in containments]):
-            return int_t, containments_types.stopping_bundle
+            return int_t, containments_types.stopping_bundle, bgCharge
 
         # Bundle is throughgoing
         return int_t, containments_types.throughgoing_bundle, bgCharge
