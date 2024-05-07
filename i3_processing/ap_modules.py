@@ -574,54 +574,6 @@ class APMCLabeler(icetray.I3Module):
                     return containments_types.stopping
         return containments_types.no_intersect
     
-    #don't think I really need this function, not using lepton injector
-    @staticmethod
-    def get_neutrino_interaction_type_li(prop):
-        # Test for leptonic Glashow
-        if (
-            (prop.initialType == I3Particle.NuEBar)
-            and (prop.finalType1 in negative_charged_leptons)
-            and (prop.finalType2 in anti_neutrino_types)
-        ):
-            if prop.finalType1 == I3Particle.EMinus:
-                return interaction_types.gr_leptonic_e
-            if prop.finalType1 == I3Particle.MuMinus:
-                return interaction_types.gr_leptonic_mu
-            if prop.finalType1 == I3Particle.TauMinus:
-                return interaction_types.gr_leptonic_tau
-
-        # Test for hadronic Glashow
-        if (
-            (prop.initialType == I3Particle.NuEBar)
-            and (prop.finalType1 == I3Particle.Hadrons)
-            and (prop.finalType2 == I3Particle.Hadrons)
-        ):
-            return interaction_types.gr_hadronic
-
-        # Test for CC
-        if prop.finalType1 in all_charged_leptons:
-            if prop.initialType in electron_neutrinos:
-                return interaction_types.nue_cc
-            if prop.initialType in muon_neutrinos:
-                return interaction_types.numu_cc
-            if prop.initialType in tau_neutrinos:
-                return interaction_types.nutau_cc
-
-        # Test for NC
-        if prop.finalType1 in all_neutrinos:
-            if prop.initialType in electron_neutrinos:
-                return interaction_types.nue_nc
-            if prop.initialType in muon_neutrinos:
-                return interaction_types.numu_nc
-            if prop.initialType in tau_neutrinos:
-                return interaction_types.nutau_nc
-
-        raise RuntimeError(
-            "Unknown interaction type: {} -> {} + {}".format(
-                prop.initialType, prop.finalType1, prop.finalType2
-            )
-        )
-    
     @staticmethod
     def get_neutrino_interaction_type_nugen(wdict, tree):
         int_t = wdict["InteractionType"]
