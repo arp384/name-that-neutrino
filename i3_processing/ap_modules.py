@@ -890,31 +890,63 @@ class APMCLabeler(icetray.I3Module):
             self._geo = frame["I3Geometry"]
         self.PushFrame(frame)
 
-    def getSignalCharge(self):
-        '''
-        Function for computing signal charge contribution
-        
-        '''
-        
-        pass
+    def getSubtreeCharge(self, frame, tree, root):
 
-    def getQtot(self):
+        '''
+        Function for computing charge contribution based on subtree of a particle
+        '''
+
+        #get a list of all the children of the particle
+        #do a dfs of the tree, add pids to list each time we pop a particle
+        queue = [root]
+        pids = []
+
+        while True:
+            if queue == []:
+                break
+            p = queue.pop()
+            pids.append(p.id)
+            children = tree.children(p)
+            for ch in children:
+                queue.append(ch)
+        
+        mc_pulse_series_map = frame[self._mc_pulse_series_map]
+
+        #issue: sometimes double counting pulses. Need a way to make sure we get set of unique pulses.
+        all_pulses = []
+        for omkey, idmap in frame[self._mc_pulse_pid_map_name]: #loop over all the omkeys in pid map
+            
+            mc_pulse_series = mc_pulse_series_map[omkey]        #get the pulse series on that DOM
+
+            #id map maps pids to what pulses it's responsible for on that DOM
+            indices = range(0, len(mc_pulse_series)) #list of indices
+            for pid in idmap.keys():                            #loop over all the pids in the pid map
+                
+                if pid in pids: #check if the pid is in our list of children
+
+                    #every time we see a new index pop it from the list of indices
+                    for idx, i in enumerate(idmap[pid]):
+                        if i in indices:
+                            all_pulses.append(mc_pulse_series[i])
+                            indices.pop(idx)
+
+        #now we have a list of unique pulses attributable to subtree of root particle
+        charge = sum([p.charge for p in all_pulses])
+
+        return charge
+
+    def getQtot(self, frame):
 
         '''
         Function for computing total charge in event
         
         '''
-
-        pass
-
-    def getBackgroundCharge(self):
-
-        '''
-        Function for computing background charge contribution
+        pulse_map = frame['I3MCPulseSeriesMap'] #dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'InIceDSTPulses') #Get pulse map
+        keys = pulse_map.keys()
         
-        '''
+        all_pulses = [p for i,j in pulse_map for p in j]
+        return sum([p.charge for p in all_pulses])
 
-        pass
 
     @staticmethod
     def find_neutrinos(tree):
@@ -1122,13 +1154,7 @@ class APMCLabeler(icetray.I3Module):
     def _classify_neutrinos(self, frame):
 
         tree = frame[self._mctree_name]
-        if self._is_li:
-            prop = frame[self._event_properties_name]
-            int_t = self.get_neutrino_interaction_type_li(prop)
-        else:
-            wdict = frame[self._weight_dict_name]
-            int_t = self.get_neutrino_interaction_type_nugen(wdict, tree)
-
+        
         in_ice_neutrino = self.get_inice_neutrino(tree, self._is_li)
 
         if in_ice_neutrino is not None:
