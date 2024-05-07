@@ -942,7 +942,6 @@ class APMCLabeler(icetray.I3Module):
         
         '''
         pulse_map = frame['I3MCPulseSeriesMap'] #dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'InIceDSTPulses') #Get pulse map
-        keys = pulse_map.keys()
         
         all_pulses = [p for i,j in pulse_map for p in j]
         return sum([p.charge for p in all_pulses])
@@ -1159,45 +1158,8 @@ class APMCLabeler(icetray.I3Module):
 
         if in_ice_neutrino is not None:
 
-            children = tree.children(in_ice_neutrino)
-            pids = []
-            #children = tree.children(in_ice_neutrino)
-            pids += [p.id for p in children]
-            
-
-            ###################################################  AP ADDITION ######################################################################
-            #get the entire subtree of children of the neutrino (as opposed to only first generation); this ensures we don't miss any charge
-            while True:
-                tmp = []
-
-                #loop over all the particles in the children array
-                for p in children:
-                    for ch in tree.children(p): #add every child of THAT particle to a new array
-                        tmp.append(ch)
-                if tmp == []:                   #if the array is empty, we know to stop
-                    break
-                pids += [p.id for p in tmp]     #add the pids of the children to our list
-                children = tmp                  #recurse
-                
-            children = tree.children(in_ice_neutrino)               #reset the children array, because it's used later
-            mc_pulse_series_map = frame[self._mc_pulse_map_name]    #get pulse series
-
-
-            pulses_from_sig = []                                    #initialize list of pulses
-            for omkey, idmap in frame[self._mc_pulse_pid_map_name]: #loop over all the omkeys in pid map
-
-                mc_pulse_series = mc_pulse_series_map[omkey]        #get the pulse series on that DOM
-                pulse_ind = []                                      #save indices of pulses we've already seen
-                for pid in idmap.keys():                            #loop over all the pids in the pid map
-                    for ind in idmap[pid]:                          #loop over all the indices in the idmap
-                        if ind not in pulse_ind:                    #check that index is not already seen (some sims can have multiple pids attributable to one pulse - resulted in double counting)
-                            if pid in pids:                         #check if the pid is in our list of child pids
-                                pulses_from_sig.append(mc_pulse_series[ind])    #if it is, add the pulse to our list
-                                pulse_ind += [ind]                              #add the index to list of seen indices
-
-            qsig = sum([p.charge for p in pulses_from_sig])     #sum up all the pulses to get the signal charge
-            ##################################################################################################################################
-
+            qSignal = self.getSubtreeCharge(frame, tree, in_ice_neutrino)
+            children = tree.children(in_ice_neutrino)               #save the children array, because it's used later
 
             # Classify everything related to muons
             if int_t in track_interactions:
@@ -1262,7 +1224,7 @@ class APMCLabeler(icetray.I3Module):
         else:
             int_t = None
             containment = None
-        return int_t, containment, qsig
+        return int_t, containment, qSignal
 
     def _classify_corsika(self, frame):
         """
@@ -1272,8 +1234,9 @@ class APMCLabeler(icetray.I3Module):
         away from the detector is classified as skimming
         """
 
-        tree = frame[self._mctree_name]
+        tree = frame[self._bg_mctree_name]
         corsika_muons = self.get_corsika_muons(tree)
+        bgCharge = sum([self.getSubtreeCharge(frame, tree, m) for m in corsika_muons])
 
         containments = [
             self.get_containment(
@@ -1306,7 +1269,7 @@ class APMCLabeler(icetray.I3Module):
             return int_t, containments_types.stopping_bundle
 
         # Bundle is throughgoing
-        return int_t, containments_types.throughgoing_bundle
+        return int_t, containments_types.throughgoing_bundle, bgCharge
     
     def classify(self, frame):
         if self._mctree_name not in frame:
@@ -1320,74 +1283,32 @@ class APMCLabeler(icetray.I3Module):
                 self._geo, self._cr_muon_padding
             )
 
-        if self._is_corsika:
-            int_t, containment = self._classify_corsika(frame)
-        else:
-            int_t, containment,qsig = self._classify_neutrinos(frame)
-
-        # Polyplopia
-        tree = frame[self._mctree_name]
-        bg_tree = frame[self._bg_mctree_name]
-        poly_muons = self.get_corsika_muons(bg_tree)
-        containments = [
-            self.get_containment(muon, self._surface_cr) for muon in poly_muons
-        ]
-
-        n_stop_through = sum(
-            [
-                1
-                for cont in containments
-                if cont
-                in [containments_types.stopping, containments_types.throughgoing]
-            ]
-        )
-
-        mcpe_from_muons = 0
-        mcpe_from_muons_charge = 0
         
-        # Sadly some simulations break the MCPEID map, so give useres the chance to skip
-        if self._mcpe_pid_map_name is not None and self._mcpe_pid_map_name in frame:
-            # Also collect MCPE from CR muons
-            poly_muon_ids = [p.id for p in poly_muons]
-            # Most MCPE will be caused by daughter particles of the muon
-            poly_muon_ids += [ch.id for p in poly_muons for ch in tree.children(p)] #should this be bgtree.children? tree is primary neutrino + its children
+        int_t_cr, containment_cr,qbg = self._classify_corsika(frame) #classify corsika part
+        
+        int_t_ng, containment_ng,qsig = self._classify_neutrinos(frame) #classify nugen part
 
-            mcpe_series_map = frame[self._mcpe_map_name]
-            if self._mcpe_map_name in frame:
-                # Collect the total mcpe charge from CR muons
-                for omkey, idmap in frame[self._mcpe_pid_map_name]:
-
-                    if omkey not in mcpe_series_map:
-                        #warnings.warn("Couldn't find OMKey in MCPESeriesMap")
-                        pass #this is problematic
-                    else:
-                        mcpe_series = mcpe_series_map[omkey]
-                        #print(mcpe_series)
-                        #print(mcpe_series[0])
-                        for pmid in poly_muon_ids:
-                            # loop through the PIDs
-                            if pmid in idmap.keys():
-                                mcpe_indices = idmap[pmid]
-                                mcpe_from_muons_charge += sum(
-                                    [mcpe_series[i].charge for i in mcpe_indices] #this line doesn't work? I3MCPulse has no attribute, npe
-                                )
-
-                                mcpe_from_muons += len(mcpe_indices)
-
+    
         #print(mcpe_from_muons)
         #print(mcpe_from_muons_charge)
-        return class_mapping.get((int_t, containment), classification.unclassified), qsig
+        return (class_mapping.get((int_t_cr, containment_cr), classification.unclassified),
+                class_mapping.get((int_t_ng, containment_ng), classification.unclassified),
+                qbg,
+                qsig)
     
     def DAQ(self, frame):
         if self._geo is None:
             raise RuntimeError("No geometry information found")
-        classif,qsig = self.classify(frame)
-        #print(classif)
-        #print(frame['I3EventHeader']['EventID'])
-        frame["classification" + self._key_postfix] = icetray.I3Int(int(classif))
+        cr_classification, ng_classification, qbg,qsig = self.classify(frame)
+        qtotal = self.getQtot(frame)
+        frame["classification" + self._key_postfix] = icetray.I3Int(int(ng_classification))
         frame["classification_label" + self._key_postfix] = dataclasses.I3String(
-            classif.name
+            ng_classification.name
         )
+        frame["corsika_label" + self._key_postfix] = icetray.I3Int(int(cr_classification))
+        frame["corsika_classification" + self._key_postfix] = dataclasses.I3String(cr_classification.name)
+
         frame["signal_charge" + self._key_postfix] = dataclasses.I3Double(qsig)
-        
+        frame["bg_charge" + self._key_postfix] = dataclasses.I3Double(qbg)
+        frame["qtot" + self._key_postfix] = dataclasses.I3Double(qtotal)
         self.PushFrame(frame)
