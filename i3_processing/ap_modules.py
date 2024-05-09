@@ -11,14 +11,14 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import h5py
 import glob
-from icecube.icetray import I3Units
-import icecube.MuonGun
-from icecube import dataio, dataclasses, icetray, MuonGun
-from I3Tray import *
-from icecube.hdfwriter import I3HDFWriter
+from icecube.icetray import I3Units # type: ignore
+import icecube.MuonGun # type: ignore
+from icecube import dataio, dataclasses, icetray, MuonGun # type: ignore
+from I3Tray import * # type: ignore
+from icecube.hdfwriter import I3HDFWriter # type: ignore
 
-from icecube.dataclasses import I3Particle
-from I3Tray import I3Units
+from icecube.dataclasses import I3Particle # type: ignore
+from I3Tray import I3Units # type: ignore
 
 from enums import (
     cascade_interactions,
@@ -32,7 +32,7 @@ from enums import (
 )
 
 try:
-    from icecube import LeptonInjector
+    from icecube import LeptonInjector # type: ignore
 
     LI_FOUND = True
 except:
