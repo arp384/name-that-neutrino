@@ -441,7 +441,8 @@ class APMCLabeler(icetray.I3Module):
                             all_pulses.append(mc_pulse_series[i])
                             indices.remove(i)
 
-        #now we have a list of unique pulses attributable to subtree of root particle
+        #now we have a list of unique pulses attributable to subtree of root particle. sum their charge to get total charge that the 
+        #root is "responsible for"
         charge = sum([p.charge for p in all_pulses])
 
         return charge
