@@ -540,9 +540,7 @@ class APMCLabeler(icetray.I3Module):
         
         int_t_ng, containment_ng,qsig = self._classify_neutrinos(frame) #classify nugen part
 
-    
-        #print(mcpe_from_muons)
-        #print(mcpe_from_muons_charge)
+
         return (class_mapping.get((int_t_cr, containment_cr), classification.unclassified),
                 class_mapping.get((int_t_ng, containment_ng), classification.unclassified),
                 qbg,
@@ -553,10 +551,24 @@ class APMCLabeler(icetray.I3Module):
             raise RuntimeError("No geometry information found")
         cr_classification, ng_classification, qbg,qsig = self.classify(frame)
         qtotal = self.getQtot(frame)
-        frame["classification" + self._key_postfix] = icetray.I3Int(int(ng_classification))
-        frame["classification_label" + self._key_postfix] = dataclasses.I3String(
-            ng_classification.name
-        )
+        
+        if (qbg > qsig):
+            
+            frame["truth_classification" + self._key_postfix] = icetray.I3Int(int(cr_classification))
+            frame["truth_label" + self._key_postfix] = dataclasses.I3String(
+                cr_classification.name
+            )
+            
+        else:
+            
+            frame["truth_classification" + self._key_postfix] = icetray.I3Int(int(ng_classification))
+            frame["truth_label" + self._key_postfix] = dataclasses.I3String(
+                ng_classification.name
+            )
+            
+            
+        frame["nugen_label" + self._key_postfix] = icetray.I3Int(int(ng_classification))
+        frame["nugen_classification" + self._key_postfix] = dataclasses.I3String(ng_classification.name)
         frame["corsika_label" + self._key_postfix] = icetray.I3Int(int(cr_classification))
         frame["corsika_classification" + self._key_postfix] = dataclasses.I3String(cr_classification.name)
 
