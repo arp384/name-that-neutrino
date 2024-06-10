@@ -7,7 +7,7 @@ from icecube import dataio, dataclasses, icetray, MuonGun
 from I3Tray import *
 from icecube.hdfwriter import I3HDFWriter
 from mc_labeler import MCLabeler
-from ap_modules import CorsikaLabeler, QTot
+from ap_modules import APMCLabeler
 import h5py
 
 
@@ -49,10 +49,11 @@ def apply_modules(input_file, output_dir):
     outfile = outdir+'/ap_modules'+infile_name
     hdf_name = f'{outdir}/ap_modules_{infile_name}.hd5'
     tray.Add('I3Reader', FilenameList=[infile])
-    tray.Add(MCLabeler)
-    tray.Add(CorsikaLabeler)
+    tray.Add(APMCLabeler)
+    #tray.Add(MCLabeler)
+    #tray.Add(CorsikaLabeler)
     tray.AddModule("I3NullSplitter", "fullevent")
-    tray.Add(QTot, 'Qtotal', Where = 'Qtot')
+    #tray.Add(QTot, 'Qtotal', Where = 'Qtot')
     tray.Add('I3Writer', 'EventWriter', ##dont need to create new i3
     FileName= outdir+'/ap_modules_'+infile_name,
         Streams=[icetray.I3Frame.TrayInfo,
@@ -63,8 +64,8 @@ def apply_modules(input_file, output_dir):
         icetray.I3Frame.Stream('S')])
         #DropOrphanStreams=[icetray.I3Frame.DAQ])
     tray.AddSegment(I3HDFWriter, Output = hdf_name, Keys = ['I3EventHeader',\
-    'classification', 'corsika_label', 'Qtot',  \
-    'coincident_muons', 'bg_charge', 'signal_charge', 'subject_id'], SubEventStreams=['fullevent'])
+    'classification', 'corsika_label', 'qtot',  \
+     'bg_charge', 'signal_charge', 'subject_id'], SubEventStreams=['fullevent'])
     tray.AddModule('TrashCan','can')
 
     tray.Execute()
@@ -83,7 +84,7 @@ def process_data(hdf): #, out_dir, subject_set_id):
     subj_id = hdf_file['subject_id']['value'][:]
     bg_charge = hdf_file['bg_charge']['value'][:]
     signal_charge = hdf_file['signal_charge']['value'][:]
-    Qtot = hdf_file['Qtot']['value'][:]
+    Qtot = hdf_file['qtot']['value'][:]
     coincident_muons = hdf_file['coincident_muons']['value'][:]
     #Dataframe time
     df = pd.DataFrame(dict(run = run_id, event = event_id, subject_id = subj_id, truth_classification = truth_label, \
