@@ -54,7 +54,8 @@ def filter1(infile, outdir):
         DropOrphanStreams=[icetray.I3Frame.DAQ])
     tray.AddSegment(I3HDFWriter, Output = f'{outdir}mc_labeled_{infile_name}.hd5', Keys = ['I3EventHeader','I3MCWeightDict',\
     'ml_suite_classification','NuGPrimary','PoleMuonLinefit', 'PoleMuonLinefitParams', 'PoleMuonLlhFitMuE', 'PoleMuonLlhFitFitParams',\
-    'PoleMuonLlhFit','PolyplopiaInfo','PolyplopiaPrimary','I3MCTree','I3MCTree_preMuonProp','classification'], SubEventStreams=['InIceSplit'])
+    'PoleMuonLlhFit','PolyplopiaInfo','PolyplopiaPrimary','I3MCTree','I3MCTree_preMuonProp','nugen_classification', 'corsika_classification', \
+        'truth_classification', 'signal_charge', 'bg_charge', 'qtot'], SubEventStreams=['InIceSplit'])
     tray.AddModule('TrashCan','can')
 
     tray.Execute()
