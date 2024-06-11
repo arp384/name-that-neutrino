@@ -552,6 +552,11 @@ class APMCLabeler(icetray.I3Module):
         cr_classification, ng_classification, qbg,qsig = self.classify(frame)
         qtotal = self.getQtot(frame)
         
+        #nugen label is signal; corsika label is background label
+        #truth label is the "final" label, depending on the ratio of qsig to qbg
+        
+        
+        #figure out what truth label should be based on ratio of charge
         if (qbg > qsig):
             
             frame["truth_classification" + self._key_postfix] = icetray.I3Int(int(cr_classification))
@@ -567,6 +572,7 @@ class APMCLabeler(icetray.I3Module):
             )
             
             
+        #add in all the other stuff just to have
         frame["nugen_label" + self._key_postfix] = icetray.I3Int(int(ng_classification))
         frame["nugen_classification" + self._key_postfix] = dataclasses.I3String(ng_classification.name)
         frame["corsika_label" + self._key_postfix] = icetray.I3Int(int(cr_classification))
