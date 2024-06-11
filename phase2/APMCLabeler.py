@@ -573,10 +573,10 @@ class APMCLabeler(icetray.I3Module):
             
             
         #add in all the other stuff just to have
-        frame["nugen_label" + self._key_postfix] = icetray.I3Int(int(ng_classification))
-        frame["nugen_classification" + self._key_postfix] = dataclasses.I3String(ng_classification.name)
-        frame["corsika_label" + self._key_postfix] = icetray.I3Int(int(cr_classification))
-        frame["corsika_classification" + self._key_postfix] = dataclasses.I3String(cr_classification.name)
+        frame["nugen_classification" + self._key_postfix] = icetray.I3Int(int(ng_classification))
+        frame["nugen_label" + self._key_postfix] = dataclasses.I3String(ng_classification.name)
+        frame["corsika_classification" + self._key_postfix] = icetray.I3Int(int(cr_classification))
+        frame["corsika_label" + self._key_postfix] = dataclasses.I3String(cr_classification.name)
 
         frame["signal_charge" + self._key_postfix] = dataclasses.I3Double(qsig)
         frame["bg_charge" + self._key_postfix] = dataclasses.I3Double(qbg)
