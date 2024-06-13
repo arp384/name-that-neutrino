@@ -560,9 +560,17 @@ class APMCLabeler(icetray.I3Module):
         if (qbg > qsig):
             
             frame["truth_classification" + self._key_postfix] = icetray.I3Int(int(cr_classification))
-            frame["truth_label" + self._key_postfix] = dataclasses.I3String(
+            classif = dataclasses.I3String(
                 cr_classification.name
             )
+            
+            if classif == 19:
+                frame["truth_label" + self._key_postfix] = 1
+            elif classif = 20:
+                frame["truth_label" + self._key_postfix] = 3
+            else:
+                frame["truth_label" + self._key_postfix] = classif
+            
             
         else:
             
