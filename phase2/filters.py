@@ -14,7 +14,7 @@ import icecube.MuonGun
 from icecube import dataio, dataclasses, icetray, MuonGun
 from I3Tray import *
 from icecube.hdfwriter import I3HDFWriter
-from mc_labeler import MCLabeler #make sure that mc_labeler script is in directory. 
+from APMCLabeler import APMCLabeler #import new custom MC labeler
 
 
 '''
@@ -41,7 +41,7 @@ def filter1(infile, outdir):
     infile_name = infile.split('/')[-1]
     tray = I3Tray()
     tray.Add('I3Reader', FilenameList=[infile])
-    tray.Add(MCLabeler)
+    tray.Add(APMCLabeler)
     tray.Add('I3Writer', 'EventWriter',
     FileName= outdir+'/mc_labeled_'+infile_name,
         Streams=[icetray.I3Frame.TrayInfo,
@@ -54,8 +54,7 @@ def filter1(infile, outdir):
         DropOrphanStreams=[icetray.I3Frame.DAQ])
     tray.AddSegment(I3HDFWriter, Output = f'{outdir}mc_labeled_{infile_name}.hd5', Keys = ['I3EventHeader','I3MCWeightDict',\
     'ml_suite_classification','NuGPrimary','PoleMuonLinefit', 'PoleMuonLinefitParams', 'PoleMuonLlhFitMuE', 'PoleMuonLlhFitFitParams',\
-    'PoleMuonLlhFit','PolyplopiaInfo','PolyplopiaPrimary','I3MCTree','I3MCTree_preMuonProp','nugen_classification', 'corsika_classification', \
-        'truth_classification', 'signal_charge', 'bg_charge', 'qtot'], SubEventStreams=['InIceSplit'])
+    'PoleMuonLlhFit','PolyplopiaInfo','PolyplopiaPrimary','I3MCTree','I3MCTree_preMuonProp','truth_classification'], SubEventStreams=['InIceSplit'])
     tray.AddModule('TrashCan','can')
 
     tray.Execute()
@@ -87,7 +86,7 @@ def uniformenergy_events(hdf,bin_num, size,random_seed,subrun = False):
     pred_starttrack_val = hdf_file['ml_suite_classification']['prediction_0003'][:] #Starting Track
     pred_stoptrack_val = hdf_file['ml_suite_classification']['prediction_0004'][:] #Stopping Track
 
-    truth_label = hdf_file['classification']['value'][:] #mc_labeler value
+    truth_label = hdf_file['truth_classification']['value'][:] #mc_labeler value
 
     energy_val = hdf_file['NuGPrimary']['energy'][:]
     zenith_val = hdf_file['NuGPrimary']['zenith'][:]
@@ -239,7 +238,7 @@ Filter 3:
 - Maybe make another hdf just in case?
 """
 
-#AP edit: filter3 extracts all the DAQ frames, but keeps them all in a singular I3 instead of splitting up
+#AP edit: filter3 extracts all the DAQ frames, but keeps them all in a singular I3 instead of splitting up (maybe restore that later?)
 def filter3(infile, run_id,ddir):
     drive, ipath =os.path.splitdrive(infile)
     path, ifn = os.path.split(ipath)
@@ -250,18 +249,17 @@ def filter3(infile, run_id,ddir):
     #os.mkdir(f'daq_{run_id}')
     #os.mkdir('/home/aphillips/name-that-neutrino/output/daq_{}'.format(run_id))
     outdir = os.path.join(ddir,name_run,"")
-    print(outdir)
     tray = I3Tray()
     tray.Add('I3Reader', FilenameList=[infile])
     tray.Add('I3Writer', 'EventWriter', #AP edit
-    FileName= outdir+'daq_only_'+infile_name, #AP edit
+    FileName= outdir+'daq_only-%04u_'+infile_name,
         Streams=[icetray.I3Frame.TrayInfo,
         icetray.I3Frame.Geometry,
         icetray.I3Frame.Calibration,
         icetray.I3Frame.DetectorStatus,
         icetray.I3Frame.DAQ,
-        icetray.I3Frame.Stream('S')])
-        #SizeLimit = 2*10**6,) #AP edit
+        icetray.I3Frame.Stream('S')],
+        SizeLimit = 2*10**6,)
     tray.AddModule('TrashCan','can')
 
     tray.Execute()
