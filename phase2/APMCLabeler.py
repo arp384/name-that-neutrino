@@ -566,7 +566,7 @@ class APMCLabeler(icetray.I3Module):
             
             if classif == 19:
                 frame["truth_label" + self._key_postfix] = 1
-            elif classif = 20:
+            elif classif == 20:
                 frame["truth_label" + self._key_postfix] = 3
             else:
                 frame["truth_label" + self._key_postfix] = classif
