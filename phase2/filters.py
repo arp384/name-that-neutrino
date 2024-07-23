@@ -235,7 +235,7 @@ Filter 3:
 """
 
 #extracts daq frames, splits i3s into 2 mb files to ease steamhovel processing
-def filter3(infile, run_id,ddir):
+def extract_daq(infile, run_id,ddir):
     drive, ipath =os.path.splitdrive(infile)
     path, ifn = os.path.split(ipath)
     infile_name = infile.split('/')[-1]
