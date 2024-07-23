@@ -50,7 +50,7 @@ label_dict = {0:'unclassified',
                         17:'lollipop',
                         18:'inverted_lollipop',
                         19:'throughgoing_bundle',
-                        20:'throughgoing_bundle',
+                        20:'stopping_bundle',
                         21:'tau_to_mu'}
 
 
