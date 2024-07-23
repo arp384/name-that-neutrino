@@ -82,7 +82,7 @@ def make_csv(hdf):
         oneweight = ow, signal_charge = signal_charge, bg_charge = bg_charge, qtot = qtot))
     
     df['qratio'] = np.divide(signal_charge, signal_charge+bg_charge) #charge ratio
-    df['log10_max_charge'] = np.maximumum(bg_charge, signal_charge)
+    df['log10_max_charge'] = np.maximum(bg_charge, signal_charge)
     hdf_file.close()
     
     #make array of english truth classification labels
@@ -121,7 +121,7 @@ def make_csv(hdf):
 
 
 
-def cuts(events_csv):
+def cuts(frame, event_csv):
     
     df = pd.read_csv(f'{event_csv}')
     events  = df['event'][:].values
@@ -136,5 +136,31 @@ def cuts(events_csv):
                               
     else:
         return False
+    
+    
+def do_cuts(infile, outdir,event_csv):
+    drive, ipath =os.path.splitdrive(infile)
+    path, ifn = os.path.split(ipath)
+    infile_name = infile.split('/')[-1]
+    tray = I3Tray()
+    tray.Add('I3Reader', FilenameList=[infile])
+    tray.AddModule(cuts,event_csv = event_csv)
+    tray.Add('I3Writer', 'EventWriter',
+    FileName= outdir+'/cuts_'+infile_name,
+        Streams=[icetray.I3Frame.TrayInfo,
+        icetray.I3Frame.Geometry,
+        icetray.I3Frame.Calibration,
+        icetray.I3Frame.DetectorStatus,
+        icetray.I3Frame.DAQ,
+        icetray.I3Frame.Physics, 
+        icetray.I3Frame.Stream('S')],
+        DropOrphanStreams=[icetray.I3Frame.DAQ]) 
+    tray.AddSegment(I3HDFWriter, Output = f'{outdir}cuts_{infile_name}.hd5', Keys = ['I3EventHeader','I3MCWeightDict',\
+    'ml_suite_classification','NuGPrimary','PoleMuonLinefit', 'PoleMuonLinefitParams', 'PoleMuonLlhFitMuE', 'PoleMuonLlhFitFitParams',\
+    'PoleMuonLlhFit','PolyplopiaInfo','PolyplopiaPrimary','I3MCTree','I3MCTree_preMuonProp','classification'], SubEventStreams=['InIceSplit'])
+    tray.AddModule('TrashCan','can')
+
+    tray.Execute()
+    tray.Finish()
                               
 

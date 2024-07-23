@@ -61,7 +61,7 @@ Filter 1:
 - HDFWriter to make hdf table of info.
 This is definetly not the most efficient since it needs to run the mc labeler on all frames, but it is what it is for now ¯\_(ツ)_/¯
 """
-def filter1(infile, outdir):
+def label_events(infile, outdir):
     drive, ipath =os.path.splitdrive(infile)
     path, ifn = os.path.split(ipath)
     infile_name = infile.split('/')[-1]
@@ -80,7 +80,8 @@ def filter1(infile, outdir):
         DropOrphanStreams=[icetray.I3Frame.DAQ])
     tray.AddSegment(I3HDFWriter, Output = f'{outdir}mc_labeled_{infile_name}.hd5', Keys = ['I3EventHeader','I3MCWeightDict',\
     'ml_suite_classification','NuGPrimary','PoleMuonLinefit', 'PoleMuonLinefitParams', 'PoleMuonLlhFitMuE', 'PoleMuonLlhFitFitParams',\
-    'PoleMuonLlhFit','PolyplopiaInfo','PolyplopiaPrimary','I3MCTree','I3MCTree_preMuonProp','truth_classification'], SubEventStreams=['InIceSplit'])
+    'PoleMuonLlhFit','PolyplopiaInfo','PolyplopiaPrimary','I3MCTree','I3MCTree_preMuonProp','truth_classification', 'signal_charge', 
+    'bg_charge', 'qtot'], SubEventStreams=['InIceSplit'])
     tray.AddModule('TrashCan','can')
 
     tray.Execute()
