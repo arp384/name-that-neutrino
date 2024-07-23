@@ -123,7 +123,7 @@ def uniformenergy_events(hdf,bin_num, size,random_seed,subrun = False):
                         17:'lollipop',
                         18:'inverted_lollipop',
                         19:'throughgoing_bundle',
-                        20:'throughgoing_bundle',
+                        20:'stopping_bundle',
                         21:'tau_to_mu'}
     
     #turn numbers into words!
