@@ -242,20 +242,19 @@ def extract_daq(infile, run_id,ddir):
     name_run = f'daq_{run_id}'
     #print(name_run)
     #new_daq_out = os.join(outdir,name_run)
-    #os.mkdir(f'daq_{run_id}')
-    #os.mkdir('/home/aphillips/name-that-neutrino/output/daq_{}'.format(run_id))
+    os.mkdir(f'daq_{run_id}')
     outdir = os.path.join(ddir,name_run,"")
+    #print(outdir)
     tray = I3Tray()
     tray.Add('I3Reader', FilenameList=[infile])
-    tray.Add('I3Writer', 'EventWriter', #AP edit
+    tray.Add('I3Writer', 'EventWriter',
     FileName= outdir+'daq_only-%04u_'+infile_name,
         Streams=[icetray.I3Frame.TrayInfo,
         icetray.I3Frame.Geometry,
         icetray.I3Frame.Calibration,
         icetray.I3Frame.DetectorStatus,
         icetray.I3Frame.DAQ,
-        icetray.I3Frame.Stream('S')],
-        SizeLimit = 2*10**6,)
+        icetray.I3Frame.Stream('S')])
     tray.AddModule('TrashCan','can')
 
     tray.Execute()

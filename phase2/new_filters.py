@@ -50,7 +50,7 @@ label_dict = {0:'unclassified',
                         20:'stopping_track', #usually stopping_bundle, but mapping to ntn categs
                         21:'tau_to_mu'}
 
-def make_csv(hdf):
+def make_csv(hdf, random_seed = 1234, size=5):
     #open hdf of desired i3 file
     hdf = f'{hdf}'
     hdf_file = h5py.File(hdf, "r+")
@@ -117,6 +117,29 @@ def make_csv(hdf):
     #remove events with log10(max_charge) < 1
     df_filtered = df_filtered[df_filtered['log10_max_charge'] >= 1]
     
+    
+    
+    #get uniform distribution of event types
+    df_filtered['ntn_category'] = list(df_filtered['truth_classification'])
+    df_filtered = df_filtered.replace({'ntn_category':[1,2,3,4,5,6,7,8,19,20]},{'ntn_category':[2,3,4,0,4,1,1,0,2,4]},regex=False)
+    
+    print(f'Length: {len(df_filtered)}')
+    
+    seed=random_seed
+    rng = np.random.default_rng(seed)
+    
+    event_indices = np.array([]) #empty array for event indices
+    for i in range(0,5):
+        events = df_filtered.loc[df_filtered['ntn_category'] == i]
+        if len(events) > 0:
+            if len(events) >= size:
+                event_subset = rng.choice(events.index,replace=False, size=size) #pick specified number of events from each energy bin. 
+            else:
+                event_subset = events.index
+            event_indices = np.append(event_indices, event_subset)
+    df_filtered = df_filtered.loc[df_filtered.index.intersection(event_indices)]
+    
+    
     return df_filtered.to_csv(os.path.join(os.getcwd(), 'events_df.csv'))
 
 
@@ -127,14 +150,13 @@ def cuts(frame, event_csv):
     events  = df['event'][:].values
                               
     if frame['I3EventHeader'].sub_event_stream == 'InIceSplit':
-                              
         event_id = frame['I3EventHeader'].event_id     
         if event_id in events:
             return True
         else:
             return False
                               
-    else:
+    elif frame['I3EventHeader'].sub_event_stream == 'NullSplit':
         return False
     
     
