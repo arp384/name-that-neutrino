@@ -49,6 +49,39 @@ label_dict = {0:'unclassified',
                         19:'throughgoing_track', #usually through-going bundle, but mapping to ntn categories
                         20:'stopping_track', #usually stopping_bundle, but mapping to ntn categs
                         21:'tau_to_mu'}
+"""
+Filter 1:
+- Use in ice split only. 
+- Add mc_labeler tray.
+- HDFWriter to make hdf table of info.
+This is definetly not the most efficient since it needs to run the mc labeler on all frames, but it is what it is for now ¯\_(ツ)_/¯
+"""
+def label_events(infile, outdir):
+    drive, ipath =os.path.splitdrive(infile)
+    path, ifn = os.path.split(ipath)
+    infile_name = infile.split('/')[-1]
+    tray = I3Tray()
+    tray.Add('I3Reader', FilenameList=[infile])
+    tray.Add(APMCLabeler)
+    tray.Add('I3Writer', 'EventWriter',
+    FileName= outdir+'/mc_labeled_'+infile_name,
+        Streams=[icetray.I3Frame.TrayInfo,
+        icetray.I3Frame.Geometry,
+        icetray.I3Frame.Calibration,
+        icetray.I3Frame.DetectorStatus,
+        icetray.I3Frame.DAQ,
+        icetray.I3Frame.Physics,
+        icetray.I3Frame.Stream('S')],
+        DropOrphanStreams=[icetray.I3Frame.DAQ])
+    tray.AddSegment(I3HDFWriter, Output = f'{outdir}mc_labeled_{infile_name}.hd5', Keys = ['I3EventHeader','I3MCWeightDict',\
+    'ml_suite_classification','NuGPrimary','PoleMuonLinefit', 'PoleMuonLinefitParams', 'PoleMuonLlhFitMuE', 'PoleMuonLlhFitFitParams',\
+    'PoleMuonLlhFit','PolyplopiaInfo','PolyplopiaPrimary','I3MCTree','I3MCTree_preMuonProp','truth_classification', 'signal_charge', 
+    'bg_charge', 'qtot'], SubEventStreams=['InIceSplit'])
+    tray.AddModule('TrashCan','can')
+
+    tray.Execute()
+    tray.Finish()
+
 
 def make_csv(hdf, outdir, subrun, random_seed = 1234, size=100):
     #open hdf of desired i3 file
@@ -135,7 +168,7 @@ def make_csv(hdf, outdir, subrun, random_seed = 1234, size=100):
             if len(events) >= size:
                 event_subset = rng.choice(events.index,replace=False, size=size) #pick specified number of events from each energy bin. 
             else:
-                event_subset = events.index
+                event_subset = events.index #if there's not enough events, just pick them all
             event_indices = np.append(event_indices, event_subset)
     df_filtered = df_filtered.loc[df_filtered.index.intersection(event_indices)]
     
@@ -184,5 +217,34 @@ def do_cuts(infile, outdir,event_csv):
 
     tray.Execute()
     tray.Finish()
+    
+    
+#extracts daq frames, splits i3s into 2 mb files to ease steamhovel processing
+def extract_daq(infile, run_id,outdir):
+    drive, ipath =os.path.splitdrive(infile)
+    path, ifn = os.path.split(ipath)
+    infile_name = infile.split('/')[-1]
+    name_run = f'daq_{run_id}'
+    #print(name_run)
+    #new_daq_out = os.join(outdir,name_run)
+    os.mkdir(os.path.join(outdir, name_run))
+    outdir = os.path.join(outdir,name_run)
+    #print(outdir)
+    tray = I3Tray()
+    tray.Add('I3Reader', FilenameList=[infile])
+    tray.Add('I3MultiWriter', 'EventWriter',
+    FileName= os.path.join(outdir,'daq_only-%04u_'+infile_name),
+        Streams=[icetray.I3Frame.TrayInfo,
+        icetray.I3Frame.Geometry,
+        icetray.I3Frame.Calibration,
+        icetray.I3Frame.DetectorStatus,
+        icetray.I3Frame.DAQ,
+        icetray.I3Frame.Stream('S')],
+        SizeLimit = 2*10**6,)
+    tray.AddModule('TrashCan','can')
+
+    tray.Execute()
+    tray.Finish()
+
                               
 
