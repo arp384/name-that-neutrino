@@ -50,7 +50,7 @@ label_dict = {0:'unclassified',
                         20:'stopping_track', #usually stopping_bundle, but mapping to ntn categs
                         21:'tau_to_mu'}
 
-def make_csv(hdf, random_seed = 1234, size=5):
+def make_csv(hdf, outdir, subrun, random_seed = 1234, size=100):
     #open hdf of desired i3 file
     hdf = f'{hdf}'
     hdf_file = h5py.File(hdf, "r+")
@@ -82,7 +82,7 @@ def make_csv(hdf, random_seed = 1234, size=5):
         oneweight = ow, signal_charge = signal_charge, bg_charge = bg_charge, qtot = qtot))
     
     df['qratio'] = np.divide(signal_charge, signal_charge+bg_charge) #charge ratio
-    df['log10_max_charge'] = np.maximum(bg_charge, signal_charge)
+    df['log10_max_charge'] = np.log10(np.maximum(bg_charge, signal_charge))
     hdf_file.close()
     
     #make array of english truth classification labels
@@ -112,7 +112,7 @@ def make_csv(hdf, random_seed = 1234, size=5):
     df_filtered = df_filtered[df_filtered['max_score_val'] <= 0.5]
     
     #remove events with 0.2 <= qratio <= 0.8
-    df_filtered = df_filtered[(df_filtered['qratio'] <= 0.2) | (df_filtered['qratio'] <= 0.8)]
+    df_filtered = df_filtered[(df_filtered['qratio'] <= 0.2) | (df_filtered['qratio'] >= 0.8)]
     
     #remove events with log10(max_charge) < 1
     df_filtered = df_filtered[df_filtered['log10_max_charge'] >= 1]
@@ -121,7 +121,7 @@ def make_csv(hdf, random_seed = 1234, size=5):
     
     #get uniform distribution of event types
     df_filtered['ntn_category'] = list(df_filtered['truth_classification'])
-    df_filtered = df_filtered.replace({'ntn_category':[1,2,3,4,5,6,7,8,19,20]},{'ntn_category':[2,3,4,0,4,1,1,0,2,4]},regex=False)
+    df_filtered = df_filtered.replace({'ntn_category':[1,2,3,4,6,7,8,19,20]},{'ntn_category':[2,3,4,0,1,1,0,2,4]},regex=False)
     
     print(f'Length: {len(df_filtered)}')
     
@@ -140,7 +140,7 @@ def make_csv(hdf, random_seed = 1234, size=5):
     df_filtered = df_filtered.loc[df_filtered.index.intersection(event_indices)]
     
     
-    return df_filtered.to_csv(os.path.join(os.getcwd(), 'events_df.csv'))
+    return df_filtered.to_csv(os.path.join(outdir, f'events_df_{subrun}.csv'))
 
 
 
