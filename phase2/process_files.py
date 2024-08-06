@@ -19,7 +19,7 @@ Purpose: Get phase2 i3s, perform cuts
 '''
 
 
-OUTDIR = '/home/aphillips/phase2_data/'
+OUTDIR = '/scratch/aphillips/phase2_data/'
 NUMU_DIR = '/data/sim/IceCube/2020/filtered/test/newprocessing/neutrino-generator/21971/0000000-0000999/classifier/'
 NUE_DIR = '/data/sim/IceCube/2020/filtered/test/newprocessing/neutrino-generator/22067/0000000-0000999/classifier/'
 
