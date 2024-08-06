@@ -20,3 +20,5 @@ The next filter is 'do_cuts', contained in 'phase2_filters.py'. This filter does
 'extract_daq' does just what it sounds like - it cuts all the daq frames in the files. In addition, it splits the very large i3s into 2 MB sizes, and stores them in subdirectories within OUTDIR, named by the subrun. 
 
 The result of running process_files.py will be many subdirectories containing small i3 files which can then be fed into steamshovel. 
+
+An example of doing all this processing on a single i3 is shown in the notebook 'do_processing.ipynb'. You can run through this step by step to see what it's doing.
