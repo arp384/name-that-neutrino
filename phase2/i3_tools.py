@@ -50,10 +50,7 @@ def apply_modules(input_file, output_dir):
     hdf_name = f'{outdir}/ap_modules_{infile_name}.hd5'
     tray.Add('I3Reader', FilenameList=[infile])
     tray.Add(APMCLabeler)
-    #tray.Add(MCLabeler)
-    #tray.Add(CorsikaLabeler)
     tray.AddModule("I3NullSplitter", "fullevent")
-    #tray.Add(QTot, 'Qtotal', Where = 'Qtot')
     tray.Add('I3Writer', 'EventWriter', ##dont need to create new i3
     FileName= outdir+'/ap_modules_'+infile_name,
         Streams=[icetray.I3Frame.TrayInfo,
@@ -62,7 +59,6 @@ def apply_modules(input_file, output_dir):
         icetray.I3Frame.DetectorStatus,
         icetray.I3Frame.DAQ,
         icetray.I3Frame.Stream('S')])
-        #DropOrphanStreams=[icetray.I3Frame.DAQ])
     tray.AddSegment(I3HDFWriter, Output = hdf_name, Keys = ['I3EventHeader',\
     'classification', 'corsika_label', 'qtot',  \
      'bg_charge', 'signal_charge', 'subject_id'], SubEventStreams=['fullevent'])
@@ -91,7 +87,5 @@ def process_data(hdf): #, out_dir, subject_set_id):
     corsika_label = cr_label, bg_charge = bg_charge, signal_charge = signal_charge, qtot = Qtot, \
      coinc_muons = coincident_muons))
     hdf_file.close() #close hdf file now that dataframe is made. 
-    #csv_name = f'{out_dir}/all_evt_features_{run_id[0]}_{subject_set_id}.csv'
-    #df.to_csv(csv_name)
     return df #csv_name
     

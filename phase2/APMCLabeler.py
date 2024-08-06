@@ -1,7 +1,6 @@
 import numpy as np
 import sys
 sys.path.append('/home/aphillips/name-that-neutrino/ntn')
-#from uniformenergydist_filter import *
 import os
 import subprocess
 import argparse
@@ -11,14 +10,13 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import h5py
 import glob
-from icecube.icetray import I3Units # type: ignore
-import icecube.MuonGun # type: ignore
-from icecube import dataio, dataclasses, icetray, MuonGun # type: ignore
-from I3Tray import * # type: ignore
-from icecube.hdfwriter import I3HDFWriter # type: ignore
-
-from icecube.dataclasses import I3Particle # type: ignore
-from I3Tray import I3Units # type: ignore
+from icecube.icetray import I3Units
+import icecube.MuonGun 
+from icecube import dataio, dataclasses, icetray, MuonGun 
+from I3Tray import *
+from icecube.hdfwriter import I3HDFWriter
+from icecube.dataclasses import I3Particle
+from I3Tray import I3Units
 
 from enums import (
     cascade_interactions,
@@ -79,228 +77,16 @@ cascade_types = [
 ]
 
 
-class RadialCOG(icetray.I3Module):
-    
-    #filter to get radial PE center of gravity for the event
-    
-    def __init__(self, context):
-        
-        icetray.I3Module.__init__(self, context)
-        self.AddParameter('Where',
-                          'Where to put this thing',
-                          'somewhere')
-        gcd = '/home/aphillips/ntn/GeoCalibDetectorStatus_2012.56063_V1.i3.gz' #geo file
-        open_gcd = dataio.I3File(gcd)
-        open_gcd.rewind()
-        frame1 = open_gcd.pop_frame(icetray.I3Frame.Geometry)
-        i3geo = frame1['I3Geometry']
-        self.AddParameter('gcd', 'Path of GCD file', i3geo)
-        
-        
-    def Configure(self):
-        self.where = self.GetParameter('Where')
-        self.geo = self.GetParameter('gcd')
-    def DAQ(self, frame):
-        
-        DOM_r = np.zeros([64,86])
-        for i,j in self.geo.omgeo:
-            string = i.string
-            om = i.om
-            dom_pos = j.position
-            r = np.array([dom_pos.x, dom_pos.y])
-            DOM_r[om-1, string-1] = np.sqrt(np.dot(r,r))
-            
-        pulses = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'InIceDSTPulses') #Get pulse map
-        SUM = 0
-        qTot = 0
-        
-        for i,j in pulses:
-            tot_dom_charge = 0
-            for p in j:
-                tot_dom_charge += p.charge
-            qTot += tot_dom_charge
-            SUM += tot_dom_charge*DOM_r[i.om-1, i.string-1]
-            
-        COG_radial = SUM/qTot #computing center of gravity (radial)
-        frame[self.where] = dataclasses.I3Double(COG_radial) #putting it in the frame
-        self.PushFrame(frame)
-        
-class VerticalCOG(icetray.I3Module):
-    
-    #filter to get vertical PE center of gravity for the event
-    
-    def __init__(self, context):
-        
-        icetray.I3Module.__init__(self, context)
-        self.AddParameter('Where',
-                          'Where to put this thing',
-                          'somewhere')
-        gcd = '/home/aphillips/ntn/GeoCalibDetectorStatus_2012.56063_V1.i3.gz' #geo file
-        open_gcd = dataio.I3File(gcd)
-        open_gcd.rewind()
-        frame1 = open_gcd.pop_frame(icetray.I3Frame.Geometry)
-        i3geo = frame1['I3Geometry']
-        self.AddParameter('gcd', 'Path of GCD file', i3geo)
-        
-        
-    def Configure(self):
-        self.where = self.GetParameter('Where')
-        self.geo = self.GetParameter('gcd')
-    def DAQ(self, frame):
-        
-        DOM_z = np.zeros([64,86])
-        for i,j in self.geo.omgeo:
-            string = i.string
-            om = i.om
-            dom_pos = j.position
-            DOM_z[om-1, string-1] = dom_pos.z
-            
-        pulses = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'InIceDSTPulses') #Get pulse map
-        SUM = 0
-        qTot = 0
-        
-        for i,j in pulses:
-            tot_dom_charge = 0
-            for p in j:
-                tot_dom_charge += p.charge
-            qTot += tot_dom_charge
-            SUM += tot_dom_charge*DOM_z[i.om-1, i.string-1]
-            
-        COG_z = SUM/qTot #computing center of gravity (radial)
-        frame[self.where] = dataclasses.I3Double(COG_z) #putting it in the frame
-        self.PushFrame(frame)
-            
-class PERatio(icetray.I3Module):
-    
-    #filter to get PE ratio (ratio of outer PE's to total PE's seen in the event)
-    
-    def __init__(self, context):
-        
-        icetray.I3Module.__init__(self, context)
-        self.AddParameter('Where',
-                          'Where to put this thing',
-                          'somewhere')
-        gcd = '/home/aphillips/ntn/GeoCalibDetectorStatus_2012.56063_V1.i3.gz' #geo file
-        open_gcd = dataio.I3File(gcd)
-        open_gcd.rewind()
-        frame1 = open_gcd.pop_frame(icetray.I3Frame.Geometry)
-        i3geo = frame1['I3Geometry']
-        self.AddParameter('gcd', 'Path of GCD file', i3geo)
-        
-        
-    def Configure(self):
-        self.where = self.GetParameter('Where')
-        self.geo = self.GetParameter('gcd')
-    def DAQ(self, frame):
-        
-        outerStrings = [1, 2, 3, 4, 5, 6, 13, 21, 30, 40, 
-                        50, 59, 67, 74, 73, 72, 78, 77, 76,
-                        75, 68, 60, 51, 41, 31, 22, 14, 7] #all the Strings in mike b's outer layer
-        
-        
-        #now, look at strings that were activated
-        pulses = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'InIceDSTPulses') #Get pulse map
-        keys = pulses.keys()
-        ActiveStringsAll = []
-        ActiveStringsOuter = []
-        
-        #for k in keys:
-           # String = k.string
-           # if String not in ActiveStringsAll:
-             #   ActiveStringsAll.append(String)
-                #if String in outerStrings:
-                 #   ActiveStringsOuter.append(String)
-        
-        PE_outer = 0
-        PE_tot = 0
-        for i,j in pulses:
-            tot_dom_charge = 0 #sum over all the pulses the dom sees
-            for p in j:
-                tot_dom_charge += p.charge
-            if (i.string in outerStrings) or (i.om == 1) or (i.om == 86):
-                PE_outer += tot_dom_charge #if the dom's string is in the outer layer, add its PE's to running sum of outer PEs
-            PE_tot += tot_dom_charge
-        
-        
-        
-        PERatio = PE_outer/PE_tot
-        
-            
-        
-        frame[self.where] = dataclasses.I3Double(PERatio) #putting it in the frame
-        self.PushFrame(frame)
-        
-class QTot(icetray.I3Module):
-    
-    #filter to calculate the total charge seen in the event
-    
-    def __init__(self, context):
-        
-        icetray.I3Module.__init__(self, context)
-        self.AddParameter('Where',
-                          'Where to put this thing',
-                          'somewhere')
-        gcd = '/home/aphillips/ntn/GeoCalibDetectorStatus_2012.56063_V1.i3.gz' #geo file
-        open_gcd = dataio.I3File(gcd)
-        open_gcd.rewind()
-        frame1 = open_gcd.pop_frame(icetray.I3Frame.Geometry)
-        i3geo = frame1['I3Geometry']
-        self.AddParameter('gcd', 'Path of GCD file', i3geo)
-        
-        
-    def Configure(self):
-        self.where = self.GetParameter('Where')
-        self.geo = self.GetParameter('gcd')
-    def DAQ(self, frame):
-       
-        pulse_map = frame['I3MCPulseSeriesMap']#dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'InIceDSTPulses') #Get pulse map
-        keys = pulse_map.keys()
-        
-        all_pulses = [p for i,j in pulse_map for p in j]
-        Qtot = sum([p.charge for p in all_pulses])
 
-        frame[self.where] = dataclasses.I3Double(Qtot) #putting it in the frame
-        self.PushFrame(frame)
-        
-class EDep(icetray.I3Module):
-    
-    #filter to calculate the total charge seen in the event
-    
-    def __init__(self, context):
-        
-        icetray.I3Module.__init__(self, context)
-        self.AddParameter('Where',
-                          'Where to put this thing',
-                          'somewhere')
-        gcd = '/home/aphillips/ntn/GeoCalibDetectorStatus_2012.56063_V1.i3.gz' #geo file
-        open_gcd = dataio.I3File(gcd)
-        open_gcd.rewind()
-        frame1 = open_gcd.pop_frame(icetray.I3Frame.Geometry)
-        i3geo = frame1['I3Geometry']
-        self.AddParameter('gcd', 'Path of GCD file', i3geo)
-        
-        
-    def Configure(self):
-        self.where = self.GetParameter('Where')
-        self.geo = self.GetParameter('gcd')
-    def DAQ(self, frame):
-       
-        #pulse_map = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'InIceDSTPulses') #Get pulse map
-        #keys = pulse_map.keys()
-        
-        surface = MuonGun.ExtrudedPolygon.from_I3Geometry(self.geo, 0*I3Units.m)
-        
-        edep = 0
-        for track in MuonGun.Track.harvest(frame['I3MCTree'], frame['MMCTrackList']):
-            # Find distance to entrance and exit from sampling volume
-            intersections = surface.intersection(track.pos, track.dir)
-            # Get the corresponding energies
-            e0, e1 = track.get_energy(intersections.first), track.get_energy(intersections.second)
-            edep += (e0 - e1)
-        
-        frame[self.where] = dataclasses.I3Double(edep) #putting it in the frame
-        self.PushFrame(frame)
 
+'''
+Filename: APMCLabeler.py
+Author: Theo Glauch, heavily modified by Andrew Phillips
+Date: 6/10/24
+Purpose: Combined NuGen and Corsika labelers into a single labeler, base upon
+ratio of signal and background charge to total
+
+'''
 
 class APMCLabeler(icetray.I3Module):
 
@@ -754,9 +540,7 @@ class APMCLabeler(icetray.I3Module):
         
         int_t_ng, containment_ng,qsig = self._classify_neutrinos(frame) #classify nugen part
 
-    
-        #print(mcpe_from_muons)
-        #print(mcpe_from_muons_charge)
+
         return (class_mapping.get((int_t_cr, containment_cr), classification.unclassified),
                 class_mapping.get((int_t_ng, containment_ng), classification.unclassified),
                 qbg,
@@ -767,12 +551,40 @@ class APMCLabeler(icetray.I3Module):
             raise RuntimeError("No geometry information found")
         cr_classification, ng_classification, qbg,qsig = self.classify(frame)
         qtotal = self.getQtot(frame)
-        frame["classification" + self._key_postfix] = icetray.I3Int(int(ng_classification))
-        frame["classification_label" + self._key_postfix] = dataclasses.I3String(
-            ng_classification.name
-        )
-        frame["corsika_label" + self._key_postfix] = icetray.I3Int(int(cr_classification))
-        frame["corsika_classification" + self._key_postfix] = dataclasses.I3String(cr_classification.name)
+        
+        #nugen label is signal; corsika label is background label
+        #truth label is the "final" label, depending on the ratio of qsig to qbg
+        
+        
+        #figure out what truth label should be based on ratio of charge
+        if (qbg > qsig):
+            
+            frame["truth_classification" + self._key_postfix] = icetray.I3Int(int(cr_classification))
+            classif = dataclasses.I3String(
+                cr_classification.name
+            )
+            
+            if classif == 19:
+                frame["truth_label" + self._key_postfix] = 1
+            elif classif == 20:
+                frame["truth_label" + self._key_postfix] = 3
+            else:
+                frame["truth_label" + self._key_postfix] = classif
+            
+            
+        else:
+            
+            frame["truth_classification" + self._key_postfix] = icetray.I3Int(int(ng_classification))
+            frame["truth_label" + self._key_postfix] = dataclasses.I3String(
+                ng_classification.name
+            )
+            
+            
+        #add in all the other stuff just to have
+        frame["nugen_classification" + self._key_postfix] = icetray.I3Int(int(ng_classification))
+        frame["nugen_label" + self._key_postfix] = dataclasses.I3String(ng_classification.name)
+        frame["corsika_classification" + self._key_postfix] = icetray.I3Int(int(cr_classification))
+        frame["corsika_label" + self._key_postfix] = dataclasses.I3String(cr_classification.name)
 
         frame["signal_charge" + self._key_postfix] = dataclasses.I3Double(qsig)
         frame["bg_charge" + self._key_postfix] = dataclasses.I3Double(qbg)
