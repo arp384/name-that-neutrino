@@ -9,8 +9,7 @@ from I3Tray import * # type: ignore
 from icecube.hdfwriter import I3HDFWriter # type: ignore
 import h5py # type: ignore
 from APMCLabeler import APMCLabeler
-from filters import *
-from new_filters import *
+from phase2_filters import *
 
 '''
 Author: Andrew P
@@ -19,7 +18,7 @@ Purpose: Get phase2 i3s, perform cuts
 '''
 
 
-OUTDIR = '/scratch/aphillips/phase2_data/'
+OUTDIR = '/scratch/aphillips/phase2_data/' #change to desired
 NUMU_DIR = '/data/sim/IceCube/2020/filtered/test/newprocessing/neutrino-generator/21971/0000000-0000999/classifier/'
 NUE_DIR = '/data/sim/IceCube/2020/filtered/test/newprocessing/neutrino-generator/22067/0000000-0000999/classifier/'
 
