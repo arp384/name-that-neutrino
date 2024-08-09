@@ -45,7 +45,7 @@ if __name__ == '__main__':
     for subrun in numu_subruns:
         subrun = f'{subrun}'.rjust(6, '0')
         filename = f'classifier_rehyd_DST_IC86.2020_NuMu.021971.{subrun}.i3.zst'
-        filepath = os.path.join(NUE_DIR, filename)
+        filepath = os.path.join(NUMU_DIR, filename)
         
         print(f'Processing file {filename} ...\n')
         
