@@ -162,7 +162,7 @@ def make_csv(hdf, outdir, subrun, random_seed = 1234, size=100):
     rng = np.random.default_rng(seed)
     
     event_indices = np.array([]) #empty array for event indices
-    for i in range(0,5):
+    for i in [0, 2, 4]: #temporary change - already have enough throughgoing/stopping track
         events = df_filtered.loc[df_filtered['ntn_category'] == i]
         if len(events) > 0:
             if len(events) >= size:
