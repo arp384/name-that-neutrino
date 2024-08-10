@@ -83,7 +83,7 @@ def label_events(infile, outdir):
     tray.Finish()
 
 
-def make_csv(hdf, outdir, subrun, random_seed = 1234, size=100):
+def make_csv(hdf, outdir, subrun, event_types=[0,1,2,3,4], random_seed = 1234, size=100):
     #open hdf of desired i3 file
     hdf = f'{hdf}'
     hdf_file = h5py.File(hdf, "r+")
@@ -162,7 +162,8 @@ def make_csv(hdf, outdir, subrun, random_seed = 1234, size=100):
     rng = np.random.default_rng(seed)
     
     event_indices = np.array([]) #empty array for event indices
-    for i in [0, 2, 4]: #temporary change - already have enough throughgoing/stopping track
+
+    for i in event_types: #temporary change - already have enough throughgoing/stopping track
         events = df_filtered.loc[df_filtered['ntn_category'] == i]
         if len(events) > 0:
             if len(events) >= size:
