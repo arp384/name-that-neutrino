@@ -46,3 +46,7 @@ This is a script that wraps everything together. You can use it to run phase1_da
 ## Putting it all together
 Once you've done both the local and cobalt side of the data extraction, the next step is to put everything together. This is done with the ```aggregate.py``` script. This takes in the consensus data csv from the local analysis, as well as the mc information from cobalt side, and combines it all into a master csv. The file ```make_plots``` is then used to easy display the results. 
 
+
+## Phase 2 Processing
+TBD
+
