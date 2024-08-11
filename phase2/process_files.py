@@ -45,8 +45,8 @@ if __name__ == '__main__':
         print(f'Processing file {filename} ...\n')
         
         label_events(filepath, OUTDIR) #mc labels all events
-        make_csv(os.path.join(OUTDIR,f'mc_labeled_{filename}.hd5'), OUTDIR, subrun) #makes dataframe of desired events
-        do_cuts(os.path.join(OUTDIR,f'mc_labeled_{filename}'), OUTDIR, os.path.join(OUTDIR, f'events_df_{subrun}.csv'), event_types = categories) #cut on desired frames
+        make_csv(os.path.join(OUTDIR,f'mc_labeled_{filename}.hd5'), OUTDIR, subrun,  event_types = categories) #makes dataframe of desired events
+        do_cuts(os.path.join(OUTDIR,f'mc_labeled_{filename}'), OUTDIR, os.path.join(OUTDIR, f'events_df_{subrun}.csv')) #cut on desired frames
         extract_daq(os.path.join(OUTDIR, f'cuts_mc_labeled_{filename}'), f'22067{subrun}', os.path.join(OUTDIR, 'nue_event_csvs')) #extract daq only and split into 2 mb sizes
 
         event_csv = pd.read_csv(os.path.join(OUTDIR, f'events_df_{subrun}.csv')) #open the csv we just created
