@@ -11,7 +11,7 @@ Directory for performing all preliminary i3 processing for NTN phase2.
 
 
 ### How to use
-The main script is process_files.py. Running this on the command line will go incrementally through all the files specified by the subruns in nue/numu_files.csv and perform processing. For now I hardcoded in the i3 directories, as well as the desired output directories for all the resultant i3s. I'll go into some more detail on this below.
+The main notebook is hase2_processing.ipynb. Running this notebook will go incrementally through all the files specified by the subruns in nue/numu_files.csv and perform processing. For now I hardcoded in the i3 directories, as well as the desired output directories for all the resultant i3s. I'll go into some more detail on this below.
 
 Every "step" in the i3 filtering results in one or more i3 files with added modules. The first one is the mc labeler, which is contained in the file 'APMCLabeler.py' in this directory. This module applies the new MC labeler to all frames, which is very inefficient, unfortuntately. This step takes the longest amount of time. 
 
@@ -19,6 +19,6 @@ The next filter is 'do_cuts', contained in 'phase2_filters.py'. This filter does
 
 'extract_daq' does just what it sounds like - it cuts all the daq frames in the files. In addition, it splits the very large i3s into 2 MB sizes, and stores them in subdirectories within OUTDIR, named by the subrun. 
 
-The result of running process_files.py will be many subdirectories containing small i3 files which can then be fed into steamshovel. 
+The result of running process_files.py will be many subdirectories containing small i3 files which can then be fed into steamshovel, located for now at /scratch/aphillips/phase2_data.
 
-An example of doing all this processing on a single i3 is shown in the notebook 'do_processing.ipynb'. You can run through this step by step to see what it's doing.
+The log file for the most current run is phase2_log.txt. This holds all the output for the notebook. You can see here the filenames of the original i3s used for the processing, as well as the event count history.
