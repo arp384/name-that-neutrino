@@ -234,7 +234,7 @@ def extract_daq(infile, run_id,outdir):
     tray = I3Tray()
     tray.Add('I3Reader', FilenameList=[infile])
     tray.Add('I3MultiWriter', 'EventWriter',
-    FileName= os.path.join(outdir,'daq_only-%04u_'+infile_name),
+    FileName= os.path.join(outdir,'daq_only-%04u_.i3.gz'),
         Streams=[icetray.I3Frame.TrayInfo,
         icetray.I3Frame.Geometry,
         icetray.I3Frame.Calibration,
