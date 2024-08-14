@@ -11,7 +11,7 @@ Directory for performing all preliminary i3 processing for NTN phase2.
 
 
 ### How to use
-The main notebook is hase2_processing.ipynb. Running this notebook will go incrementally through all the files specified by the subruns in nue/numu_files.csv and perform processing. For now I hardcoded in the i3 directories, as well as the desired output directories for all the resultant i3s. I'll go into some more detail on this below.
+The main notebook is phase2_processing.ipynb. Running this notebook will go incrementally through all the files specified by the subruns in nue/numu_files.csv and perform processing. For now I hardcoded in the i3 directories, as well as the desired output directories for all the resultant i3s. I'll go into some more detail on this below.
 
 Every "step" in the i3 filtering results in one or more i3 files with added modules. The first one is the mc labeler, which is contained in the file 'APMCLabeler.py' in this directory. This module applies the new MC labeler to all frames, which is very inefficient, unfortuntately. This step takes the longest amount of time. 
 
